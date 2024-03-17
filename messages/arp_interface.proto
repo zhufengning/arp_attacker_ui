@@ -1,0 +1,8 @@
+syntax = "proto3";
+package arp_interface;
+
+// [RINF:RUST-SIGNAL]
+message InterfaceRes { repeated string interfaces = 1; }
+
+// [RINF:DART-SIGNAL]
+message InterfaceReq {}
