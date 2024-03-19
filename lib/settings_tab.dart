@@ -19,6 +19,7 @@ class _SettingsTabState extends State<SettingsTab> {
   bool isStarted = false;
   SharedPreferences? prefs;
   var arpAttackerPathTxt = TextEditingController(text: defaultArpAttackerPath);
+  var mypcapPathTxt = TextEditingController(text: defaultMypcapPath);
 
   Future<void> initData() async {
     prefs = await SharedPreferences.getInstance();
@@ -107,6 +108,24 @@ class _SettingsTabState extends State<SettingsTab> {
                 print(arpAttackerPathTxt.text);
                 await prefs?.setString(apPref, arpAttackerPathTxt.text);
                 await initData();
+                widget.callback();
+              }),
+          const SizedBox(height: splitSize),
+          InfoLabel(
+              label: "mypcap路径",
+              child: TextFormBox(
+                  controller: mypcapPathTxt,
+                  placeholder: "路径",
+                  onChanged: (value) {
+                    widget.callback();
+                  })),
+          Button(
+              child: const Text("保存"),
+              onPressed: () async {
+                if (mypcapPathTxt.text == "") {
+                  mypcapPathTxt.text = defaultMypcapPath;
+                }
+                await prefs?.setString(mpPref, mypcapPathTxt.text);
                 widget.callback();
               })
         ],

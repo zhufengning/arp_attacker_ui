@@ -1,4 +1,5 @@
 import 'package:arp_attacker_ui/attack_tab.dart';
+import 'package:arp_attacker_ui/pcap_tab.dart';
 import 'package:arp_attacker_ui/settings_tab.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -36,18 +37,22 @@ class Navi1 extends StatefulWidget {
 const errorInterface = "Not selected";
 const defaultArpAttackerPath =
     "/home/zfn/repos/my/arp-attacker/target/debug/arp-attacker";
+const defaultMypcapPath = "/home/zfn/repos/my/my-pcap/pcap";
+const mpPref = "mypcapPath";
 const apPref = "arpAttackerPath";
 
 class _Navi1State extends State<Navi1> {
   int topIndex = 0;
   String selectedDevice = errorInterface;
   String arpAttackerPath = defaultArpAttackerPath;
+  String mypcapPath = defaultMypcapPath;
   SharedPreferences? prefs;
 
   void updateSettings() {
     setState(() {
       selectedDevice = prefs?.getString("selectedDevice") ?? "Not selected";
       arpAttackerPath = prefs?.getString(apPref) ?? defaultArpAttackerPath;
+      mypcapPath = prefs?.getString(mpPref) ?? defaultMypcapPath;
       items[1] = PaneItem(
           icon: const Icon(FontAwesomeIcons.magnifyingGlass),
           title: const Text('扫描'),
@@ -56,6 +61,11 @@ class _Navi1State extends State<Navi1> {
         icon: const Icon(FontAwesomeIcons.gun),
         title: const Text('攻击'),
         body: AttackTab(selectedDevice, arpAttackerPath),
+      );
+      items[3] = PaneItem(
+        icon: const Icon(FontAwesomeIcons.networkWired),
+        title: const Text('抓包'),
+        body: PcapTab(mypcapPath, selectedDevice),
       );
     });
   }
@@ -84,6 +94,11 @@ class _Navi1State extends State<Navi1> {
             icon: const Icon(FontAwesomeIcons.gun),
             title: const Text('攻击'),
             body: AttackTab(selectedDevice, arpAttackerPath),
+          ),
+          PaneItem(
+            icon: const Icon(FontAwesomeIcons.networkWired),
+            title: const Text('抓包'),
+            body: PcapTab(mypcapPath, selectedDevice),
           ),
         ];
       });
