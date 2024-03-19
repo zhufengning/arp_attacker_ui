@@ -5,4 +5,10 @@ package arp_interface;
 message InterfaceRes { repeated string interfaces = 1; }
 
 // [RINF:DART-SIGNAL]
-message InterfaceReq {}
+message InterfaceReq { string exec_path = 1; }
+
+// [RINF:DART-SIGNAL]
+message AttackReq {bool start = 1; string exec_path = 2;}
+
+// [RINF:RUST-SIGNAL]
+message AttackRes {string msg = 1;}

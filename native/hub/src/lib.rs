@@ -19,5 +19,7 @@ rinf::write_interface!();
 async fn main() {
     // Repeat `tokio::spawn` anywhere in your code
     // if more concurrent tasks are needed.
-    tokio::spawn(arp_attack::list_interfaces());
+    loop {
+        arp_attack::list_interfaces().await;
+    }
 }

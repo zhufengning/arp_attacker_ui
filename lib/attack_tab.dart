@@ -1,49 +1,73 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:arp_attacker_ui/messages/arp_interface.pb.dart';
 import 'package:fluent_ui/fluent_ui.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'main.dart';
 
 class AttackTab extends StatefulWidget {
-  const AttackTab({super.key});
+  final String interface, attackerPath;
+  const AttackTab(this.interface, this.attackerPath, {super.key});
 
   @override
   State<AttackTab> createState() => _AttackTabState();
 }
 
-const splitSize = 8.0;
-
 class _AttackTabState extends State<AttackTab> {
-  List<String> networkDevices = ["eth0"];
-  String selectedDevice = "eth0";
   String targetIp = '';
   String gateway = '';
   bool isStarted = false;
+  SharedPreferences? prefs;
+  Process? process;
+  TextEditingController outputs = TextEditingController();
+  TextEditingController errors = TextEditingController();
+  ScrollController outputsScrollController = ScrollController();
+  ScrollController errorsScrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
     InterfaceReq().sendSignalToRust(null);
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
-      final stream = InterfaceRes.rustSignalStream;
-      var a = await stream.first;
-      setState(() {
-        networkDevices = a.message.interfaces;
-        selectedDevice = networkDevices.first;
-      });
+      prefs = await SharedPreferences.getInstance();
     });
   }
 
-  void startOrStop() {
+  void startOrStop() async {
+    if (isStarted) {
+      print("kill process");
+      process!.kill();
+      process = null;
+    } else {
+      print("start process");
+      outputs.clear();
+      errors.clear();
+      var args = [
+        "-i",
+        widget.interface,
+      ];
+      if (targetIp.isNotEmpty) {
+        args.addAll(["-t", targetIp]);
+      }
+      args.add(gateway);
+      process = await Process.start(widget.attackerPath, args);
+
+      process?.stderr.transform(Utf8Decoder()).forEach((e) {
+        errors.text += e;
+        errorsScrollController
+            .jumpTo(errorsScrollController.position.maxScrollExtent - 14);
+      });
+      process?.stdout.transform(Utf8Decoder()).forEach((e) {
+        outputs.text += e;
+        outputsScrollController
+            .jumpTo(outputsScrollController.position.maxScrollExtent - 14);
+      });
+    }
     setState(() {
-          isStarted = !isStarted;
-          //print("isStarted: $isStarted");
-          // if (isStarted) {
-          //   AttackReq().sendSignalToRust(AttackReqData()
-          //     ..interface = selectedDevice
-          //     ..targetIp = targetIp
-          //     ..gateway = gateway);
-          // } else {
-          //   AttackReq().sendSignalToRust(null);
-          // }
-        });
+      isStarted = !isStarted;
+    });
   }
 
   @override
@@ -52,21 +76,9 @@ class _AttackTabState extends State<AttackTab> {
       content: ListView(
         padding: const EdgeInsets.all(splitSize),
         children: [
-          InfoLabel(
-              label: '选择网络接口',
-              child: DropDownButton(
-                title: Text(selectedDevice),
-                items: networkDevices.map((device) {
-                  return MenuFlyoutItem(
-                    text: Text(device),
-                    onPressed: () {
-                      setState(() {
-                        selectedDevice = device;
-                      });
-                    },
-                  );
-                }).toList(),
-              )),
+          Text('当前选择的网络接口是: ${widget.interface}'),
+          const SizedBox(height: splitSize),
+          Text('attacker路径: ${widget.attackerPath}'),
           const SizedBox(height: splitSize),
           TextBox(
             onChanged: (value) {
@@ -74,7 +86,7 @@ class _AttackTabState extends State<AttackTab> {
                 targetIp = value;
               });
             },
-            placeholder: "目标IP",
+            placeholder: "目标IP或Mac或留空",
           ),
           const SizedBox(height: splitSize),
           TextBox(
@@ -86,9 +98,25 @@ class _AttackTabState extends State<AttackTab> {
             placeholder: "网关IP",
           ),
           const SizedBox(height: splitSize),
-          !isStarted
+          (!isStarted
               ? FilledButton(onPressed: startOrStop, child: const Text("开始"))
-              : Button(onPressed: startOrStop, child: const Text("停止"))
+              : Button(onPressed: startOrStop, child: const Text("停止"))),
+          const SizedBox(height: splitSize),
+          InfoLabel(
+              label: "输出",
+              child: TextFormBox(
+                controller: outputs,
+                scrollController: outputsScrollController,
+                minLines: 6,
+                maxLines: 6,
+              )),
+          InfoLabel(
+              label: "错误",
+              child: TextFormBox(
+                controller: errors,
+                minLines: 6,
+                maxLines: 6,
+              )),
         ],
       ),
     );
