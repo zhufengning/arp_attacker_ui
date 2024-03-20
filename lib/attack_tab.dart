@@ -109,6 +109,7 @@ class _AttackTabState extends State<AttackTab> {
                 scrollController: outputsScrollController,
                 minLines: 6,
                 maxLines: 6,
+                style: const TextStyle(fontFamily: "monospace"),
               )),
           InfoLabel(
               label: "错误",
@@ -116,6 +117,7 @@ class _AttackTabState extends State<AttackTab> {
                 controller: errors,
                 minLines: 6,
                 maxLines: 6,
+                style: const TextStyle(fontFamily: "monospace"),
               )),
         ],
       ),
