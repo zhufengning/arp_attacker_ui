@@ -18,7 +18,7 @@ class _ScanTabState extends State<ScanTab> {
   String targetNetwork = "10.0.2.0/24";
   bool isStarted = false;
   Process? process;
-  TextEditingController outputs = TextEditingController();
+  TextEditingController outputs = TextEditingController(), arp = TextEditingController();
 
   void startOrStop() async {
     if (isStarted) {
@@ -33,6 +33,18 @@ class _ScanTabState extends State<ScanTab> {
     }
     setState(() {
       isStarted = !isStarted;
+    });
+  }
+
+  @override
+  initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
+      var process = await Process.start("arp", ["-a"]);
+
+      process?.stdout.transform(Utf8Decoder()).forEach((e) {
+        arp.text += e;
+      });
     });
   }
 
@@ -58,6 +70,8 @@ class _ScanTabState extends State<ScanTab> {
           ),
           const SizedBox(height: splitSize),
           TextFormBox(controller: outputs, readOnly: true, maxLines: 20),
+          const SizedBox(height: splitSize),
+          TextFormBox(controller: arp, readOnly: true, maxLines: 20),
         ],
       ),
     );
